@@ -4,18 +4,63 @@ using UnityEngine;
 
 public class EnemyController : MonoBehaviour
 {
+    enum EnemyState {
+        Idle,
+        Moving
+    }
+
+    private EnemyState currentState = EnemyState.Idle;
+    private SpriteRenderer sr;
+    // The value found in Debug.Log above
+    private const float SIGHT_DISTANCE = 7.5f;
+    // The two points that the Enemy will move between in the Moving state.
+    private const float RIGHT_MAX = 27.5f;
+    private const float LEFT_MAX = 22.5f;
+
+    private int direction = -1;
+    private float xSpeed = 0.02f;
+
     public GameObject player;
+
+    void IdleState(float distance) {
+        sr.color = Color.white;
+
+        // switch to moving if in sight range
+        if (distance <= SIGHT_DISTANCE) {
+            currentState = EnemyState.Moving;
+        }
+    }
+
+    void MovingState(float distance) {
+        sr.color = Color.yellow;
+
+        // move back and forth
+        if (transform.position.x >= RIGHT_MAX) {
+            direction = -1;
+        } else if (transform.position.x <= LEFT_MAX) {
+            direction = 1;
+        }
+        transform.position = new Vector3(transform.position.x + direction * xSpeed, transform.position.y, transform.position.z);
+
+        // switch to idle if out of sight range
+        if (distance > SIGHT_DISTANCE) {
+            currentState = EnemyState.Idle;
+        }
+    }
     // Start is called before the first frame update
     void Start()
     {
-        
+        sr = GetComponent<SpriteRenderer>();
     }
 
     // Update is called once per frame
     void Update()
     {
         float distance = Vector3.Distance(player.transform.position, gameObject.transform.position);
-        // Log the distance so that we can find the ideal sight range of the enemy
-        Debug.Log(distance);
+        if (currentState == EnemyState.Idle) {
+            IdleState(distance);
+        } else if (currentState == EnemyState.Moving) {
+            MovingState(distance);
+        }
     }
 }
